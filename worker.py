@@ -58,10 +58,24 @@ def process_document_task(self, job_id: int):
         print(f"Starting CrewAI for Job ID: {job_id}, Query: {job.query}, File: {job.file_path}")
         result = financial_crew.kickoff(inputs={'query': job.query, 'file_path': job.file_path})
 
+
         # 4. Save results to DB
+        result_str = str(result)
         job.status = "COMPLETED"
-        job.result_text = str(result)
+        job.result_text = result_str
         db.commit()
+
+        # 5. Generate slick PDF report
+        try:
+            from markdown_pdf import MarkdownPdf, Section
+            os.makedirs("outputs", exist_ok=True)
+            pdf_path = f"outputs/job_{job.id}_analysis.pdf"
+            pdf = MarkdownPdf(toc_level=2)
+            pdf.add_section(Section(result_str))
+            pdf.save(pdf_path)
+            print(f"Successfully generated PDF: {pdf_path}")
+        except Exception as pdf_e:
+            print(f"PDF generation failed: {pdf_e}")
 
         return {"job_id": job.id, "status": "COMPLETED"}
 

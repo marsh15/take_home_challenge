@@ -81,7 +81,8 @@ async def get_job_status(job_id: int, db: Session = Depends(get_db)):
     
     if job.status in ["COMPLETED", "FAILED"]:
         if job.status == "COMPLETED":
-            response["analysis"] = job.result_text
+            response["message"] = "Analysis is ready! Download your PDF report."
+            response["download_url"] = f"http://localhost:8000/jobs/{job.id}/pdf"
         else:
             response["error"] = job.result_text
         
@@ -93,6 +94,20 @@ async def get_job_status(job_id: int, db: Session = Depends(get_db)):
                 pass
         
     return response
+
+@app.get("/jobs/{job_id}/pdf")
+async def download_job_pdf(job_id: int):
+    """Download the finalized financial analysis as a PDF"""
+    from fastapi.responses import FileResponse
+    pdf_path = f"outputs/job_{job_id}_analysis.pdf"
+    
+    if os.path.exists(pdf_path):
+        return FileResponse(
+            path=pdf_path, 
+            filename=f"Financial_Analysis_Job_{job_id}.pdf", 
+            media_type='application/pdf'
+        )
+    raise HTTPException(status_code=404, detail="PDF not found or still generating.")
 
 if __name__ == "__main__":
     import uvicorn

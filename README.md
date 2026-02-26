@@ -87,9 +87,13 @@ The heavy AI processing runs in an isolated background worker process. Clients c
 
 **Solution**: Refactored all agent and task definitions into **factory functions** (`get_verifier()`, `get_verification_task()`, etc.). Each Celery job instantiates completely fresh, isolated agents and tasks, preventing memory/context cross-contamination.
 
-### Automatic File Cleanup
+### Automatic PDF Generation
 
-Temporary uploaded PDFs are automatically deleted from disk when a job reaches a terminal state (`COMPLETED` or `FAILED`), preventing disk space leaks.
+**Problem**: The AI returns massive 3,000+ word Markdown strings that are difficult to read and manage inside a raw JSON terminal response.
+
+**Solution**: Added the `markdown-pdf` library. The moment a Celery worker completes the CrewAI pipeline, it instantly converts the generated Markdown report into a beautifully paginated, professional PDF document saved to the `outputs/` directory.
+
+The API provides a dedicated `GET /jobs/{job_id}/pdf` endpoint for instant, formatted downloading.
 
 ---
 
@@ -97,19 +101,19 @@ Temporary uploaded PDFs are automatically deleted from disk when a job reaches a
 
 ```
 financial-document-analyzer-debug/
-├── main.py            # FastAPI server — upload endpoint + job polling endpoint
-├── worker.py          # Celery background worker — runs the CrewAI pipeline
-├── agents.py          # AI agent definitions (factory functions with dynamic LLM selection)
-├── task.py            # CrewAI task definitions (factory functions)
+├── main.py            # FastAPI server — upload endpoint + PDF download endpoint
+├── worker.py          # Celery worker — runs CrewAI and generates the PDF
+├── agents.py          # AI agent definitions (dynamic LLM selection)
+├── task.py            # CrewAI task definitions 
 ├── tools.py           # PDF reader tool + web search tool
 ├── database.py        # SQLAlchemy engine and session setup (SQLite)
 ├── models.py          # Database models (User, AnalysisJob)
 ├── requirements.txt   # Python dependencies
 ├── .env.example       # Environment variable template
 ├── .gitignore         # Git ignore rules
-├── data/              # Sample financial documents
+├── data/              # Temporary isolated upload directory
 │   └── TSLA-Q2-2025-Update.pdf
-└── outputs/           # Reserved for future output files
+└── outputs/           # Automatically generated PDF analysis reports
 ```
 
 ---
@@ -227,9 +231,19 @@ curl -X GET "http://localhost:8000/jobs/1"
   "job_id": 1,
   "status": "COMPLETED",
   "query": "What are the key financial metrics?",
-  "analysis": "# Financial Analysis Report\n\n## Key Metrics\n..."
+  "message": "Analysis is ready! Download your PDF report.",
+  "download_url": "http://localhost:8000/jobs/1/pdf"
 }
 ```
+
+### Download the PDF Report
+
+Once the status is `COMPLETED`, you can download the sleek, fully-formatted PDF analysis:
+
+```bash
+curl -O http://localhost:8000/jobs/1/pdf
+```
+*(This saves the file directly to your computer as `Financial_Analysis_Job_1.pdf`)*
 
 ### Interactive API Docs
 

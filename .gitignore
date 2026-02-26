@@ -20,6 +20,9 @@ build/
 # Temporary uploaded files
 data/financial_document_*.pdf
 
+# Generated PDFs and Output
+outputs/
+
 # IDE
 .idea/
 .vscode/
@@ -29,3 +32,4 @@ data/financial_document_*.pdf
 # OS
 .DS_Store
 Thumbs.db
+dump.rdb
