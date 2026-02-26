@@ -1,5 +1,7 @@
 # 📊 Financial Document Analyzer — Debug Challenge
 
+> **🎬 [Watch the Project Demo Video Here](./demovid.mp4)**
+
 An AI-powered financial document analysis system built with **CrewAI**, **FastAPI**, **Celery**, and **SQLAlchemy**. Upload a PDF financial report and receive a comprehensive analysis covering financial health, investment strategies, and risk assessment — all processed asynchronously via a background worker queue.
 
 > **Note**: This is a debugged and upgraded version of the original project. All deterministic bugs and inefficient prompts have been fixed, and bonus features (queue worker model + database integration) have been implemented.
